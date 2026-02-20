@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Migrar datos a Firestore | Mis Raízes</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f0f0f;
+            color: #eee;
+            padding: 40px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #d4a853;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #b8903f, #d4a853);
+            border: none;
+            border-radius: 8px;
+            color: #111;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover {
+            box-shadow: 0 4px 15px rgba(212, 168, 83, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #log {
+            margin-top: 20px;
+            padding: 20px;
+            background: #191919;
+            border-radius: 8px;
+            border: 1px solid #2a2a2a;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .success {
+            color: #27ae60;
+        }
+
+        .error {
+            color: #e74c3c;
+        }
+
+        .info {
+            color: #3498db;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Migrar Menu a Firestore</h1>
+    <p>Este script sube los datos del menu a Firebase Firestore. Solo necesitas ejecutarlo una vez.</p>
+    <button id="migrateBtn" onclick="migrateData()">Iniciar Migracion</button>
+    <div id="log"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="/js/firebase-config.js"></script>
+    <script>
+        var logEl = document.getElementById('log');
+
+        function log(msg, cls) {
+            var line = document.createElement('div');
+            line.className = cls || '';
+            line.textContent = msg;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        var menuData = [
+            {
+                categoria: "DESAYUNOS (9 a 12)", items: [
+                    { nombre: "PAN CON CHICHARRON", precio: "6.00", descripcion: "", disponible: "si" },
+                    { nombre: "PAN CON POLLO", precio: "6.00", descripcion: "", disponible: "si" },
+                    { nombre: "LOMO AL JUGO", precio: "8.00", descripcion: "", disponible: "si" },
+                    { nombre: "TAMAL", precio: "7.00", descripcion: "", disponible: "si" },
+                    { nombre: "CALDO DE GALLINA", precio: "12.90", descripcion: "", disponible: "si" },
+                    { nombre: "CALDO DE MOTE", precio: "12.90", descripcion: "", disponible: "si" }
+                ]
+            },
+            {
+                categoria: "PLATOS PRINCIPALES", items: [
+                    { nombre: "LOMO SALTADO", precio: "18.90", descripcion: "", disponible: "si" },
+                    { nombre: "TALLARIN SALTADO", precio: "17.90", descripcion: "", disponible: "si" },
+                    { nombre: "AJI DE GALLINA", precio: "16.90", descripcion: "", disponible: "si" },
+                    { nombre: "ARROZ CON PATO", precio: "18.90", descripcion: "", disponible: "si" },
+                    { nombre: "CHAUFA DE POLLO", precio: "14.90", descripcion: "", disponible: "si" },
+                    { nombre: "CHAUFA DE CARNE", precio: "16.90", descripcion: "", disponible: "si" },
+                    { nombre: "CHAUFA DE MARISCOS", precio: "22.90", descripcion: "", disponible: "si" },
+                    { nombre: "CHAUFA MIXTO", precio: "17.90", descripcion: "", disponible: "si" },
+                    { nombre: "TALLARINES VERDES", precio: "15.90", descripcion: "", disponible: "si" },
+                    { nombre: "FETTUCCINI CON LOMO SALTADO", precio: "19.90", descripcion: "", disponible: "si" },
+                    { nombre: "ANTICUCHO", precio: "14.90", descripcion: "", disponible: "si" },
+                    { nombre: "ANTICUCHO CON RACHI", precio: "16.90", descripcion: "", disponible: "si" },
+                    { nombre: "CALDO DE GALLINA", precio: "12.90", descripcion: "", disponible: "si" },
+                    { nombre: "CALDO DE MOTE", precio: "12.90", descripcion: "", disponible: "si" }
+                ]
+            },
+            {
+                categoria: "COMBOS", items: [
+                    { nombre: "TRIO MARINO", precio: "24.90", descripcion: "Ceviche, arroz con marisco y chicharron", disponible: "si" },
+                    { nombre: "TRIO CRIOLLO", precio: "21.90", descripcion: "Tallarin, chanfainita, papa a la huancaina y ceviche", disponible: "si" }
+                ]
+            },
+            {
+                categoria: "ENTRADAS", items: [
+                    { nombre: "PAPA A LA HUANCAINA", precio: "9.90", descripcion: "", disponible: "si" },
+                    { nombre: "PAPA RELLENA", precio: "10.90", descripcion: "", disponible: "si" },
+                    { nombre: "CAUSA LIMENA", precio: "11.90", descripcion: "", disponible: "si" },
+                    { nombre: "YUCA FRITA CON HUANCAINA", precio: "9.90", descripcion: "", disponible: "si" },
+                    { nombre: "CAUSA ACEVICHADA", precio: "15.90", descripcion: "", disponible: "si" },
+                    { nombre: "LECHE DE TIGRE", precio: "13.90", descripcion: "", disponible: "si" },
+                    { nombre: "ALITAS ACEVICHADAS", precio: "11.90", descripcion: "", disponible: "si" },
+                    { nombre: "TAMAL", precio: "7.00", descripcion: "", disponible: "si" }
+                ]
+            },
+            {
+                categoria: "POSTRES", items: [
+                    { nombre: "TARTA CHOCOLATE", precio: "5.00", descripcion: "", disponible: "si" },
+                    { nombre: "TARTA TRES LECHES", precio: "5.00", descripcion: "", disponible: "si" },
+                    { nombre: "MAZAMORRA", precio: "4.00", descripcion: "", disponible: "si" },
+                    { nombre: "GELATINA", precio: "3.00", descripcion: "", disponible: "si" }
+                ]
+            },
+            {
+                categoria: "RACIONES", items: [
+                    { nombre: "PATATAS FRITAS", precio: "5.00", descripcion: "", disponible: "si" },
+                    { nombre: "ARROZ BLANCO", precio: "4.00", descripcion: "", disponible: "si" },
+                    { nombre: "ALITAS FRITAS", precio: "8.00", descripcion: "", disponible: "si" }
+                ]
+            },
+            {
+                categoria: "BEBIDAS", items: [
+                    { nombre: "COCA COLA", precio: "3.50", descripcion: "", disponible: "si" },
+                    { nombre: "FANTA NARANJA", precio: "3.50", descripcion: "", disponible: "si" },
+                    { nombre: "AQUARIUS", precio: "3.50", descripcion: "", disponible: "si" },
+                    { nombre: "NESTIE", precio: "3.50", descripcion: "", disponible: "si" },
+                    { nombre: "AGUA", precio: "2.00", descripcion: "", disponible: "si" },
+                    { nombre: "INCA KOLA", precio: "3.50", descripcion: "", disponible: "si" },
+                    { nombre: "CHICHA MORADA", precio: "3.50", descripcion: "", disponible: "si" },
+                    { nombre: "ZUMO MELOCOTON", precio: "2.50", descripcion: "", disponible: "si" },
+                    { nombre: "ZUMO PINA", precio: "2.50", descripcion: "", disponible: "si" }
+                ]
+            },
+            {
+                categoria: "LICORES", items: [
+                    { nombre: "CORONA", precio: "3.50", descripcion: "", disponible: "si" },
+                    { nombre: "HEINEKEN", precio: "3.50", descripcion: "", disponible: "si" },
+                    { nombre: "CUSQUENA", precio: "4.00", descripcion: "", disponible: "si" },
+                    { nombre: "PILSEN", precio: "4.00", descripcion: "", disponible: "si" },
+                    { nombre: "PISCO SOUR CLASICO", precio: "8.00", descripcion: "", disponible: "si" },
+                    { nombre: "PISCO SOUR MARACUYA", precio: "8.00", descripcion: "", disponible: "si" },
+                    { nombre: "CERVEZA GRIFO", precio: "3.50", descripcion: "", disponible: "si" }
+                ]
+            }
+        ];
+
+        async function migrateData() {
+            var btn = document.getElementById('migrateBtn');
+            btn.disabled = true;
+            logEl.innerHTML = '';
+
+            log('Iniciando migracion...', 'info');
+            log('Autenticando...', 'info');
+
+            try {
+                await auth.signInWithEmailAndPassword('admin@misraizes.com', 'admin');
+                log('Autenticado correctamente', 'success');
+                var batch = db.batch();
+
+                for (var i = 0; i < menuData.length; i++) {
+                    var cat = menuData[i];
+                    var slug = cat.categoria.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+                    var docRef = db.collection('menu').doc(slug);
+                    batch.set(docRef, {
+                        nombre: cat.categoria,
+                        orden: i,
+                        items: cat.items
+                    });
+
+                    log('Categoria: ' + cat.categoria + ' (' + cat.items.length + ' platos)', 'success');
+                }
+
+                await batch.commit();
+
+                var totalItems = menuData.reduce(function (sum, cat) { return sum + cat.items.length; }, 0);
+                log('', '');
+                log('Migracion completada con exito!', 'success');
+                log(menuData.length + ' categorias y ' + totalItems + ' platos subidos a Firestore.', 'success');
+                log('', '');
+                log('Ahora recarga la pagina principal para ver la carta.', 'info');
+
+            } catch (err) {
+                log('Error: ' + err.message, 'error');
+                console.error(err);
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>
