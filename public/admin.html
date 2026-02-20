@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Mis Raízes - Cocina Peruana</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="icon" type="image/x-icon" href="/img/logo.jpg">
+</head>
+
+<body>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <img src="/img/logo.jpg" alt="Mis Raízes" class="login-logo">
+            <h1 class="login-title">Panel de Administración</h1>
+            <p class="login-subtitle">Ingresa la contraseña para acceder</p>
+            <form id="loginForm" class="login-form">
+                <input type="password" id="loginPassword" class="login-input" placeholder="Contraseña" required
+                    autocomplete="current-password">
+                <button type="submit" class="login-btn">Acceder</button>
+                <p class="login-error" id="loginError"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="admin-panel" id="adminPanel" style="display:none;">
+        <!-- Top Bar -->
+        <header class="admin-header">
+            <div class="admin-header-left">
+                <img src="/img/logo.jpg" alt="Mis Raízes" class="admin-logo">
+                <div>
+                    <h1 class="admin-title">Panel de Administración</h1>
+                    <p class="admin-subtitle">Gestión de la carta digital</p>
+                </div>
+            </div>
+            <div class="admin-header-right">
+                <a href="/" class="btn btn-gold" target="_blank">VER CARTA</a>
+                <button class="btn btn-gold" onclick="showQRModal()">CÓDIGO QR</button>
+                <button class="btn btn-danger" onclick="logout()">Salir</button>
+            </div>
+        </header>
+
+        <!-- Actions Bar -->
+        <div class="actions-bar">
+            <div class="actions-left">
+                <button class="btn btn-outline" onclick="saveMenu()">💾 Guardar Cambios</button>
+                <button class="btn btn-outline" onclick="addCategory()">+ Nueva Categoría</button>
+            </div>
+        </div>
+
+        <!-- Status Message -->
+        <div class="status-bar" id="statusBar" style="display:none;">
+            <span id="statusMessage"></span>
+            <button class="status-close" onclick="hideStatus()">✕</button>
+        </div>
+
+        <!-- Category Sections Container -->
+        <div id="menuSections" class="menu-sections"></div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display:none;">
+            <p class="empty-icon">📋</p>
+            <p class="empty-text">No hay platos en la carta</p>
+            <p class="empty-sub">Añade platos manualmente o crea una nueva categoría</p>
+        </div>
+    </div>
+
+    <!-- QR Modal -->
+    <div class="modal-overlay" id="qrModal" style="display:none;">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeQRModal()">✕</button>
+            <h2 class="modal-title">Código QR de la Carta</h2>
+            <p class="modal-subtitle">Previsualiza e imprime tu código QR</p>
+
+            <!-- Print-only branding (hidden on screen, shown on print) -->
+            <div class="qr-print-header">
+                <img src="/img/logo.jpg" alt="Mis Raízes" class="qr-print-logo">
+                <h1 class="qr-print-name">Mis Raízes</h1>
+                <p class="qr-print-tagline">Cocina Peruana</p>
+            </div>
+
+            <div class="qr-container" id="qrContainer">
+                <div class="spinner" style="margin:20px auto;"></div>
+            </div>
+
+            <!-- Print-only footer text -->
+            <p class="qr-print-footer">Escanea para ver la carta digital</p>
+            <!--
+            <div class="qr-url-section">
+                <label class="qr-url-label">URL de la carta:</label>
+                <div class="qr-url-row">
+                    <input type="text" id="qrUrlInput" class="qr-url-input" placeholder="http://tudominio.com">
+                    <button class="btn btn-gold btn-sm" onclick="regenerateQR()">Generar</button>
+                </div>
+                <p class="qr-tip">💡 Cambia la URL si tu servidor tiene un dominio personalizado</p>
+            </div>
+            -->
+            <div class="qr-modal-buttons">
+                <button class="btn btn-gold" onclick="printQR()">🖨️ Imprimir QR</button>
+                <button class="btn btn-outline" onclick="downloadQR()">📷 Descargar Imagen</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/admin.js"></script>
+</body>
+
+</html>

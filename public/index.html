@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="description"
+    content="Carta digital de Mis Raízes - Cocina Peruana. Descubre nuestros auténticos platos peruanos.">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Carta | Mis Raízes - Cocina Peruana</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/x-icon" href="/img/logo.jpg">
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo-container">
+      <img src="/img/logo.jpg" alt="Mis Raízes - Cocina Peruana" class="logo">
+    </div>
+    <div class="header-divider">
+      <span class="line"></span>
+      <span class="diamond"></span>
+      <span class="line"></span>
+    </div>
+    <p class="header-subtitle">Nuestra Carta</p>
+  </header>
+
+  <!-- Category Navigation -->
+  <nav class="category-nav" id="categoryNav">
+    <div class="nav-scroll" id="navScroll">
+      <!-- Generated dynamically -->
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content" id="menuContent">
+    <div class="loading" id="loadingState">
+      <div class="spinner"></div>
+      <p class="loading-text">Cargando carta...</p>
+    </div>
+  </main>
+
+  <!-- Scroll to Top -->
+  <button class="scroll-top" id="scrollTopBtn" aria-label="Volver arriba">↑</button>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <img src="/img/logo.jpg" alt="Mis Raízes" class="footer-logo">
+    <p class="footer-text">Mis Raízes · Cocina Peruana</p>
+    <p class="footer-iva">IVA incluido en todos los precios</p>
+  </footer>
+
+  <script src="/js/menu.js"></script>
+</body>
+
+</html>
