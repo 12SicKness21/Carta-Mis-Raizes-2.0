@@ -538,12 +538,14 @@ body {
     font-size: 1.2rem;
     color: var(--gold);
     margin-bottom: 5px;
+    text-align: center;
 }
 
 .modal-subtitle {
     font-size: 0.82rem;
     color: var(--text-muted);
     margin-bottom: 25px;
+    text-align: center;
 }
 
 .qr-container {
