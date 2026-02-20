@@ -1,5 +1,5 @@
 // ============================================
-// Mis Raízes - Menu Frontend Logic
+// Mis Raízes - Menu Frontend Logic (Firebase)
 // ============================================
 
 // Category icons mapping
@@ -39,17 +39,39 @@ function formatPrice(price) {
     return parseFloat(price).toFixed(2).replace('.', ',');
 }
 
-// Render the full menu
+// Load menu from Firestore
 async function loadMenu() {
     const content = document.getElementById('menuContent');
     const loading = document.getElementById('loadingState');
     const navScroll = document.getElementById('navScroll');
 
     try {
-        const res = await fetch('/api/menu');
-        const data = await res.json();
+        const snapshot = await db.collection('menu').orderBy('orden').get();
 
-        if (!data.categories || data.categories.length === 0) {
+        if (snapshot.empty) {
+            loading.innerHTML = `
+        <p class="loading-text" style="color: var(--gold);">La carta se está preparando...</p>
+        <p class="loading-text" style="font-size: 0.7rem;">Vuelve pronto</p>
+      `;
+            return;
+        }
+
+        const categories = [];
+        const menu = {};
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const catName = data.nombre;
+            categories.push(catName);
+            // Only show available items
+            menu[catName] = (data.items || []).filter(item => item.disponible !== 'no').map(item => ({
+                nombre: item.nombre,
+                precio: parseFloat(item.precio) || 0,
+                descripcion: item.descripcion || ''
+            }));
+        });
+
+        if (categories.length === 0) {
             loading.innerHTML = `
         <p class="loading-text" style="color: var(--gold);">La carta se está preparando...</p>
         <p class="loading-text" style="font-size: 0.7rem;">Vuelve pronto</p>
@@ -67,7 +89,7 @@ async function loadMenu() {
         });
         navScroll.appendChild(allBtn);
 
-        data.categories.forEach(cat => {
+        categories.forEach(cat => {
             const btn = document.createElement('button');
             btn.className = 'nav-btn';
             btn.textContent = cat.replace(/\(.*\)/, '').trim();
@@ -80,8 +102,8 @@ async function loadMenu() {
 
         // Build menu sections
         let html = '';
-        data.categories.forEach(cat => {
-            const items = data.menu[cat];
+        categories.forEach(cat => {
+            const items = menu[cat];
             if (!items || items.length === 0) return;
 
             const icon = getCategoryIcon(cat);

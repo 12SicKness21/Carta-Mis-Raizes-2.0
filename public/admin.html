@@ -69,12 +69,12 @@
         </div>
     </div>
 
-    <!-- QR Modal -->
+    <!-- QR Modal (Static Image) -->
     <div class="modal-overlay" id="qrModal" style="display:none;">
         <div class="modal-card">
             <button class="modal-close" onclick="closeQRModal()">✕</button>
             <h2 class="modal-title">Código QR de la Carta</h2>
-            <p class="modal-subtitle">Previsualiza e imprime tu código QR</p>
+            <p class="modal-subtitle">Tu código QR para la carta digital</p>
 
             <!-- Print-only branding (hidden on screen, shown on print) -->
             <div class="qr-print-header">
@@ -84,28 +84,23 @@
             </div>
 
             <div class="qr-container" id="qrContainer">
-                <div class="spinner" style="margin:20px auto;"></div>
+                <img src="/img/QR-mis-raizes.png" alt="Código QR - Mis Raízes" class="qr-static-img">
             </div>
 
             <!-- Print-only footer text -->
             <p class="qr-print-footer">Escanea para ver la carta digital</p>
-            <!--
-            <div class="qr-url-section">
-                <label class="qr-url-label">URL de la carta:</label>
-                <div class="qr-url-row">
-                    <input type="text" id="qrUrlInput" class="qr-url-input" placeholder="http://tudominio.com">
-                    <button class="btn btn-gold btn-sm" onclick="regenerateQR()">Generar</button>
-                </div>
-                <p class="qr-tip">💡 Cambia la URL si tu servidor tiene un dominio personalizado</p>
-            </div>
-            -->
+
             <div class="qr-modal-buttons">
                 <button class="btn btn-gold" onclick="printQR()">🖨️ Imprimir QR</button>
-                <button class="btn btn-outline" onclick="downloadQR()">📷 Descargar Imagen</button>
             </div>
         </div>
     </div>
 
+    <!-- Firebase SDK (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="/js/firebase-config.js"></script>
     <script src="/js/admin.js"></script>
 </body>
 

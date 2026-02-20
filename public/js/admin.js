@@ -1,52 +1,79 @@
 // ============================================
-// Mis Raízes - Admin Panel Logic
+// Mis Raízes - Admin Panel Logic (Firebase)
 // ============================================
 
-var adminPassword = '';
+// Fixed admin email for Firebase Auth (user only sees password field)
+var ADMIN_EMAIL = 'admin@misraizes.com';
 var menuItems = [];
+var categoryDocs = []; // Track Firestore category documents
 
-// === Auth ===
+// === Auth with Firebase ===
 document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
     var pw = document.getElementById('loginPassword').value;
     var errEl = document.getElementById('loginError');
 
     try {
-        var res = await fetch('/api/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: pw })
-        });
-
-        if (res.ok) {
-            adminPassword = pw;
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'block';
-            loadMenuData();
-        } else {
-            errEl.textContent = 'Contraseña incorrecta';
-        }
+        await auth.signInWithEmailAndPassword(ADMIN_EMAIL, pw);
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        loadMenuData();
     } catch (err) {
-        errEl.textContent = 'Error de conexión';
+        console.error('Auth error:', err);
+        if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+            errEl.textContent = 'Contraseña incorrecta';
+        } else if (err.code === 'auth/user-not-found') {
+            errEl.textContent = 'Usuario no configurado';
+        } else {
+            errEl.textContent = 'Error de conexión';
+        }
+    }
+});
+
+// Check if already logged in
+auth.onAuthStateChanged(function (user) {
+    if (user) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        loadMenuData();
     }
 });
 
 function logout() {
-    adminPassword = '';
+    auth.signOut();
     menuItems = [];
+    categoryDocs = [];
     document.getElementById('adminPanel').style.display = 'none';
     document.getElementById('loginScreen').style.display = '';
     document.getElementById('loginPassword').value = '';
     document.getElementById('loginError').textContent = '';
 }
 
-// === Load Menu Data ===
+// === Load Menu Data from Firestore ===
 async function loadMenuData() {
     try {
-        var res = await fetch('/api/menu/all');
-        menuItems = await res.json();
+        var snapshot = await db.collection('menu').orderBy('orden').get();
+        menuItems = [];
+        categoryDocs = [];
+
+        snapshot.forEach(function (doc) {
+            var data = doc.data();
+            categoryDocs.push({ id: doc.id, nombre: data.nombre, orden: data.orden });
+            var items = data.items || [];
+            items.forEach(function (item) {
+                menuItems.push({
+                    categoria: data.nombre,
+                    nombre: item.nombre || '',
+                    precio: String(item.precio || '0'),
+                    descripcion: item.descripcion || '',
+                    disponible: item.disponible || 'si'
+                });
+            });
+        });
+
         renderSections();
     } catch (err) {
+        console.error('Error loading menu:', err);
         showStatus('Error al cargar el menú', 'error');
     }
 }
@@ -276,137 +303,58 @@ function addCategory() {
     showStatus('Categoría "' + name + '" creada. Añade platos y guarda.', 'success');
 }
 
-// === Save ===
+// === Save to Firestore ===
 async function saveMenu() {
     try {
         sortByCategory();
-        var res = await fetch('/api/menu', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: adminPassword, items: menuItems })
+
+        // Group items by category
+        var categories = getCategories();
+        var catMap = {};
+        for (var i = 0; i < menuItems.length; i++) {
+            var cat = menuItems[i].categoria || '';
+            if (!catMap[cat]) catMap[cat] = [];
+            catMap[cat].push({
+                nombre: menuItems[i].nombre,
+                precio: menuItems[i].precio,
+                descripcion: menuItems[i].descripcion,
+                disponible: menuItems[i].disponible
+            });
+        }
+
+        // Use a batch write for atomicity
+        var batch = db.batch();
+
+        // Delete existing category docs
+        var existingDocs = await db.collection('menu').get();
+        existingDocs.forEach(function (doc) {
+            batch.delete(doc.ref);
         });
 
-        var data = await res.json();
-        if (res.ok) {
-            showStatus('✅ Menú guardado correctamente', 'success');
-            renderSections();
-        } else {
-            showStatus('❌ Error: ' + data.error, 'error');
+        // Write new category docs
+        for (var c = 0; c < categories.length; c++) {
+            var catName = categories[c];
+            var slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            var docRef = db.collection('menu').doc(slug);
+            batch.set(docRef, {
+                nombre: catName,
+                orden: c,
+                items: catMap[catName] || []
+            });
         }
+
+        await batch.commit();
+        showStatus('✅ Menú guardado correctamente', 'success');
+        renderSections();
     } catch (err) {
-        showStatus('❌ Error de conexión al guardar', 'error');
+        console.error('Error saving menu:', err);
+        showStatus('❌ Error al guardar: ' + err.message, 'error');
     }
 }
 
-// === File Upload ===
-async function uploadFile(input) {
-    var file = input.files[0];
-    if (!file) return;
-
-    var formData = new FormData();
-    formData.append('file', file);
-    formData.append('password', adminPassword);
-
-    try {
-        showStatus('⏳ Subiendo archivo...', 'info');
-
-        var res = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-        });
-
-        var data = await res.json();
-
-        if (res.ok) {
-            showStatus('✅ ' + data.message, 'success');
-            await loadMenuData();
-        } else {
-            showStatus('❌ Error: ' + data.error, 'error');
-        }
-    } catch (err) {
-        showStatus('❌ Error al subir el archivo', 'error');
-    }
-
-    input.value = '';
-}
-
-// === QR Modal ===
-function renderQRWithLogoModal(qrDataUrl) {
-    var container = document.getElementById('qrContainer');
-    container.innerHTML = '<canvas id="qrModalCanvas" style="max-width:300px;width:100%;border-radius:8px;"></canvas>';
-
-    var canvas = document.getElementById('qrModalCanvas');
-    var ctx = canvas.getContext('2d');
-
-    var qrImg = new Image();
-    qrImg.onload = function () {
-        var size = qrImg.width;
-        canvas.width = size;
-        canvas.height = size;
-        ctx.drawImage(qrImg, 0, 0, size, size);
-
-        // Logo overlay
-        var logo = new Image();
-        logo.onload = function () {
-            var logoSize = size * 0.22;
-            var x = (size - logoSize) / 2;
-            var y = (size - logoSize) / 2;
-
-            ctx.beginPath();
-            ctx.arc(size / 2, size / 2, logoSize / 2 + 8, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffffff';
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(size / 2, size / 2, logoSize / 2 + 4, 0, Math.PI * 2);
-            ctx.strokeStyle = '#d4a853';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(size / 2, size / 2, logoSize / 2, 0, Math.PI * 2);
-            ctx.clip();
-            ctx.drawImage(logo, x, y, logoSize, logoSize);
-            ctx.restore();
-        };
-        logo.src = '/img/logo.jpg';
-    };
-    qrImg.src = qrDataUrl;
-}
-
-async function showQRModal() {
-    var modal = document.getElementById('qrModal');
-    var container = document.getElementById('qrContainer');
-    var urlInput = document.getElementById('qrUrlInput');
-
-    modal.style.display = '';
-    container.innerHTML = '<div class="spinner" style="margin:20px auto;"></div>';
-
-    try {
-        var res = await fetch('/api/qr');
-        var data = await res.json();
-        renderQRWithLogoModal(data.qr);
-        if (urlInput) urlInput.value = data.url;
-    } catch (err) {
-        container.innerHTML = '<p style="color:var(--danger);">Error al generar QR</p>';
-    }
-}
-
-async function regenerateQR() {
-    var url = document.getElementById('qrUrlInput').value.trim();
-    if (!url) return;
-
-    var container = document.getElementById('qrContainer');
-    container.innerHTML = '<div class="spinner" style="margin:20px auto;"></div>';
-
-    try {
-        var res = await fetch('/api/qr?url=' + encodeURIComponent(url));
-        var data = await res.json();
-        renderQRWithLogoModal(data.qr);
-    } catch (err) {
-        container.innerHTML = '<p style="color:var(--danger);">Error al generar QR</p>';
-    }
+// === QR Modal (Static Image) ===
+function showQRModal() {
+    document.getElementById('qrModal').style.display = '';
 }
 
 function closeQRModal() {
@@ -415,18 +363,6 @@ function closeQRModal() {
 
 function printQR() {
     window.print();
-}
-
-function downloadQR() {
-    var canvas = document.getElementById('qrModalCanvas');
-    if (!canvas) {
-        showStatus('Genera el QR primero', 'error');
-        return;
-    }
-    var link = document.createElement('a');
-    link.download = 'QR-mis-raizes.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
 }
 
 // === Status Bar ===

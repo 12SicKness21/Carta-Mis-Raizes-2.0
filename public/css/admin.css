@@ -550,53 +550,15 @@ body {
     text-align: center;
     margin-bottom: 20px;
     padding: 20px;
-    background: #0a0a0a;
+    background: #ffffff;
     border-radius: 12px;
     border: 1px solid var(--border);
 }
 
-.qr-container img {
-    max-width: 256px;
+.qr-static-img {
+    max-width: 280px;
     width: 100%;
-    image-rendering: pixelated;
-}
-
-.qr-url-section {
-    margin-bottom: 20px;
-}
-
-.qr-url-label {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    display: block;
-    margin-bottom: 8px;
-}
-
-.qr-url-row {
-    display: flex;
-    gap: 8px;
-}
-
-.qr-url-input {
-    flex: 1;
-    padding: 10px 12px;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 0.85rem;
-    outline: none;
-}
-
-.qr-url-input:focus {
-    border-color: var(--gold);
-}
-
-.qr-tip {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    margin-top: 8px;
+    border-radius: 8px;
 }
 
 /* QR print-only elements (hidden on screen) */
@@ -809,7 +771,7 @@ body {
         max-width: 350px;
     }
 
-    .qr-container canvas {
+    .qr-static-img {
         max-width: 300px !important;
         width: 100% !important;
     }
