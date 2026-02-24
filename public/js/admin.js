@@ -82,7 +82,7 @@ async function loadMenuData() {
 // === Category Colors ===
 var CATEGORY_COLORS = {
     'DESAYUNOS': '#e8a838',
-    'PLATOS PRINCIPALES': '#c9785d',
+    'PLATOS CRIOLLOS': '#c9785d',
     'COMBOS': '#a87ed4',
     'ENTRADAS': '#5dba7a',
     'POSTRES': '#e06088',

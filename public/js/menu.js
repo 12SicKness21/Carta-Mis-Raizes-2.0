@@ -5,7 +5,7 @@
 // Category icons mapping
 const CATEGORY_ICONS = {
     'DESAYUNOS': '☀️',
-    'PLATOS PRINCIPALES': '🍽️',
+    'PLATOS CRIOLLOS': '🍽️',
     'COMBOS': '⭐',
     'ENTRADAS': '🥑',
     'POSTRES': '🍰',
@@ -25,7 +25,7 @@ function getCategoryIcon(category) {
 function getCategorySubtitle(category) {
     const upper = category.toUpperCase();
     if (upper.includes('DESAYUNOS')) return 'Servido de 9:00 a 12:00';
-    if (upper.includes('PRINCIPALES')) return 'Nuestros platos estrella';
+    if (upper.includes('CRIOLLOS')) return 'Nuestros platos estrella';
     if (upper.includes('COMBOS')) return 'Las mejores combinaciones';
     if (upper.includes('ENTRADAS')) return 'Para empezar';
     if (upper.includes('POSTRES')) return 'El broche de oro';
@@ -120,7 +120,7 @@ async function loadMenu() {
               ${subtitle ? `<p class="category-subtitle">${subtitle}</p>` : ''}
             </div>
           </div>
-          ${isDesayuno ? '<div class="category-note"><span class="icon">☕</span> Café incluído</div>' : ''}
+          ${isDesayuno ? '<div class="category-note"><span class="icon">☕</span> Café incluido</div>' : ''}
           <div class="menu-items">
       `;
 
