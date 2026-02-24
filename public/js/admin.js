@@ -6,6 +6,7 @@
 var ADMIN_EMAIL = 'admin@misraizes.com';
 var menuItems = [];
 var categoryDocs = []; // Track Firestore category documents
+var categoryOrder = []; // Track manual category order for drag-and-drop
 
 // === Auth with Firebase ===
 document.getElementById('loginForm').addEventListener('submit', async function (e) {
@@ -166,11 +167,14 @@ function renderSections() {
         var catColor = getCategoryColor(catName);
         var items = catMap[catName];
 
-        html += '<div class="category-section" style="border-color: ' + catColor + ';">';
+        html += '<div class="category-section" draggable="true" data-category="' + escapeAttr(catName) + '" style="border-color: ' + catColor + ';">';
 
-        // Category header
+        // Category header with drag handle
         html += '<div class="category-header" style="border-left: 4px solid ' + catColor + ';">';
+        html += '<div class="category-header-left">';
+        html += '<span class="drag-handle" title="Arrastra para reordenar">☰</span>';
         html += '<span class="category-header-name" style="color: ' + catColor + ';">' + escapeHtml(catName) + '</span>';
+        html += '</div>';
         html += '<button class="btn-add" onclick="addItem(\'' + escapeAttr(catName) + '\')" title="Añadir plato a ' + escapeAttr(catName) + '">＋</button>';
         html += '</div>';
 
@@ -208,6 +212,107 @@ function renderSections() {
     }
 
     container.innerHTML = html;
+    initCategoryDrag();
+}
+
+// === Category Drag and Drop ===
+var draggedSection = null;
+
+function initCategoryDrag() {
+    var sections = document.querySelectorAll('.category-section');
+    sections.forEach(function (section) {
+        // Only start drag from the handle
+        var handle = section.querySelector('.drag-handle');
+        if (handle) {
+            handle.addEventListener('mousedown', function () {
+                section.setAttribute('draggable', 'true');
+            });
+            handle.addEventListener('mouseup', function () {
+                section.setAttribute('draggable', 'false');
+            });
+        }
+        // Prevent drag if not from handle
+        section.setAttribute('draggable', 'false');
+
+        section.addEventListener('dragstart', function (e) {
+            draggedSection = section;
+            section.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', section.dataset.category);
+        });
+
+        section.addEventListener('dragend', function () {
+            section.classList.remove('dragging');
+            draggedSection = null;
+            // Remove all drag-over classes
+            document.querySelectorAll('.category-section.drag-over').forEach(function (el) {
+                el.classList.remove('drag-over');
+            });
+        });
+
+        section.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (draggedSection && draggedSection !== section) {
+                section.classList.add('drag-over');
+            }
+        });
+
+        section.addEventListener('dragleave', function () {
+            section.classList.remove('drag-over');
+        });
+
+        section.addEventListener('drop', function (e) {
+            e.preventDefault();
+            section.classList.remove('drag-over');
+            if (!draggedSection || draggedSection === section) return;
+
+            var container = document.getElementById('menuSections');
+            var allSections = Array.from(container.querySelectorAll('.category-section'));
+            var fromIndex = allSections.indexOf(draggedSection);
+            var toIndex = allSections.indexOf(section);
+
+            if (fromIndex < 0 || toIndex < 0) return;
+
+            // Move the DOM element
+            if (fromIndex < toIndex) {
+                container.insertBefore(draggedSection, section.nextSibling);
+            } else {
+                container.insertBefore(draggedSection, section);
+            }
+
+            // Reorder menuItems to match new category order
+            reorderCategories();
+            showStatus('Categoría movida. Recuerda guardar los cambios.', 'info');
+        });
+    });
+}
+
+function reorderCategories() {
+    var sections = document.querySelectorAll('.category-section');
+    var newOrder = [];
+    sections.forEach(function (s) {
+        var cat = s.dataset.category.replace(/\\'/g, "'").replace(/&quot;/g, '"');
+        newOrder.push(cat);
+    });
+
+    // Rebuild menuItems in new category order
+    var catMap = {};
+    for (var i = 0; i < menuItems.length; i++) {
+        var cat = menuItems[i].categoria || '';
+        if (!catMap[cat]) catMap[cat] = [];
+        catMap[cat].push(menuItems[i]);
+    }
+
+    menuItems = [];
+    for (var j = 0; j < newOrder.length; j++) {
+        var items = catMap[newOrder[j]] || [];
+        for (var k = 0; k < items.length; k++) {
+            menuItems.push(items[k]);
+        }
+    }
+
+    categoryOrder = newOrder;
 }
 
 // === CRUD Operations ===

@@ -346,6 +346,46 @@ body {
     border-bottom: 1px solid var(--border);
 }
 
+.category-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Drag handle */
+.drag-handle {
+    cursor: grab;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    user-select: none;
+    transition: var(--transition);
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+.drag-handle:hover {
+    color: var(--gold);
+    background: var(--gold-glow);
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Drag states */
+.category-section.dragging {
+    opacity: 0.5;
+    border: 2px dashed var(--gold) !important;
+    box-shadow: 0 0 15px rgba(212, 168, 83, 0.2);
+}
+
+.category-section.drag-over {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 20px rgba(212, 168, 83, 0.3);
+    background: rgba(212, 168, 83, 0.05);
+}
+
 .category-header-name {
     font-size: 1rem;
     font-weight: 700;

@@ -120,7 +120,7 @@ async function loadMenu() {
               ${subtitle ? `<p class="category-subtitle">${subtitle}</p>` : ''}
             </div>
           </div>
-          ${isDesayuno ? '<div class="category-note"><span class="icon">☕</span> Opción +1€ el café</div>' : ''}
+          ${isDesayuno ? '<div class="category-note"><span class="icon">☕</span> Café incluído</div>' : ''}
           <div class="menu-items">
       `;
 
